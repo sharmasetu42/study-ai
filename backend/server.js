@@ -10,16 +10,16 @@ require('dotenv').config();
 require('express-async-errors');
 
 const express = require('express');
-const cors    = require('cors');
-const path    = require('path');
+const cors = require('cors');
+const path = require('path');
 
 const connectDB = require('./config/db');
 
 // ── Import route files ───────────────────────────────────────
-const authRoutes     = require('./routes/auth');
+const authRoutes = require('./routes/auth');
 const documentRoutes = require('./routes/documents');
-const quizRoutes     = require('./routes/quiz');
-const aiRoutes       = require('./routes/ai');
+const quizRoutes = require('./routes/quiz');
+const aiRoutes = require('./routes/ai');
 const progressRoutes = require('./routes/progress');
 
 // ── Connect to MongoDB ───────────────────────────────────────
@@ -32,9 +32,24 @@ const app = express();
 
 // CORS: allow requests from the React frontend
 app.use(cors({
-  origin:      process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      process.env.FRONTEND_URL || 'http://localhost:5173',
+      'http://localhost:5173',
+      'http://localhost:4173',
+      // Vercel preview URLs (any subdomain of vercel.app)
+      /\.vercel\.app$/,
+    ];
+    const isAllowed = allowed.some(pattern =>
+      pattern instanceof RegExp ? pattern.test(origin) : pattern === origin
+    );
+    if (isAllowed) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
-  methods:     ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
 // Parse JSON request bodies
@@ -55,11 +70,11 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── API Routes ────────────────────────────────────────────────
-app.use('/api/auth',      authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
-app.use('/api/quiz',      quizRoutes);
-app.use('/api/ai',        aiRoutes);
-app.use('/api/progress',  progressRoutes);
+app.use('/api/quiz', quizRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/progress', progressRoutes);
 
 // ── Global error handler ─────────────────────────────────────
 // This catches any error thrown inside async route handlers
