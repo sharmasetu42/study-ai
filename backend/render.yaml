@@ -2,7 +2,7 @@ services:
   - type: web
     name: studyai-backend
     runtime: node
-    buildCommand: npm install
+    buildCommand: npm install --production=false
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
